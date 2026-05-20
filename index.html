@@ -626,20 +626,28 @@ const leaderboard = [
 ];
 
 // Точный пиксельный паттерн логотипа FRESH BAR (10x18)
-const LOGO_PATTERN = [
-  [0,1,1,1,0,1,0,0,1,0,1,1,1,0,1,1,0,0],
-  [0,1,0,0,0,1,0,0,1,0,1,0,0,0,1,0,1,0],
-  [0,1,1,0,0,1,1,1,1,0,1,1,0,0,1,0,1,0],
-  [0,1,0,0,0,1,0,0,1,0,1,0,0,0,1,0,1,0],
-  [0,1,0,0,0,1,0,0,1,0,1,1,1,0,1,1,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,1,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0],
-  [0,1,0,1,0,1,0,1,0,1,0,0,0,1,0,0,1,0],
-  [0,1,1,0,0,1,1,1,0,1,1,0,0,1,0,0,1,0],
-  [0,1,0,1,0,1,0,1,0,1,0,0,0,1,0,0,1,0],
-  [0,1,0,1,0,1,0,1,0,1,1,1,0,1,1,1,1,0],
-];
-const PIXEL_COLS = ['#9B4FDE','#7B2FBE','#5A1F94','#B06EF5','#C890FF'];
+const LETTER = {
+  F: [[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0]],
+  R: [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,1,0,0],[1,0,0,1,0],[1,0,0,0,1]],
+  E: [[1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1]],
+  S: [[0,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[0,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,1,1,1,0]],
+  H: [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],
+  B: [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0]],
+  A: [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],
+};
+
+function buildWordGrid(word) {
+  const rows = 7, gap = 1;
+  const totalCols = word.length * 5 + (word.length - 1) * gap;
+  const grid = Array.from({length: rows}, () => new Array(totalCols).fill(0));
+  word.split('').forEach((ch, wi) => {
+    const offsetX = wi * (5 + gap);
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < 5; c++)
+        grid[r][offsetX + c] = LETTER[ch][r][c];
+  });
+  return grid;
+}
 
 // ====== NAV ======
 function showScreen(id) {
@@ -848,28 +856,51 @@ function endGame() {
 function revealLogo() {
   const grid = document.getElementById('logoGrid');
   grid.innerHTML = '';
-  document.getElementById('logoSvgReveal').style.display = 'none';
+  const svgEl = document.getElementById('logoSvgReveal');
+  if (svgEl) svgEl.style.display = 'none';
 
-  // Сетка под паттерн: 18 колонок, 11 строк
-  grid.style.gridTemplateColumns = 'repeat(18, 1fr)';
-  grid.style.gridTemplateRows = 'repeat(11, 1fr)';
+  const word1 = buildWordGrid('FRESH');
+  const word2 = buildWordGrid('BAR');
+  const w1cols = word1[0].length; // 29
+  const w2cols = word2[0].length; // 17
+  const padLeft  = Math.floor((w1cols - w2cols) / 2); // 6
+  const padRight = w1cols - w2cols - padLeft;          // 6
+
+  const paddedWord2 = word2.map(row => [
+    ...new Array(padLeft).fill(0),
+    ...row,
+    ...new Array(padRight).fill(0)
+  ]);
+
+  const gapRow = new Array(w1cols).fill(0);
+  const fullGrid = [...word1, gapRow, gapRow, ...paddedWord2]; // 16 строк × 29 колонок
+  const ROWS = fullGrid.length, COLS = w1cols;
+
+  grid.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+  grid.style.gridTemplateRows    = `repeat(${ROWS}, 1fr)`;
+  grid.parentElement.style.width  = '300px';
+  grid.parentElement.style.height = `${Math.round(300 * ROWS / COLS)}px`;
 
   const cells = [];
-  for (let r = 0; r < 11; r++) {
-    for (let c = 0; c < 18; c++) {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
       const cell = document.createElement('div');
       cell.className = 'pixel-cell';
-      const isLit = LOGO_PATTERN[r][c] === 1;
-      if (isLit) {
-        cell.style.background = '#FFFFFF';
-        cell.classList.add('lit');
-      } else {
-        cell.style.background = 'rgba(255,255,255,0.04)';
-      }
+      const isLit = fullGrid[r][c] === 1;
+      cell.style.background = isLit ? '#FFFFFF' : 'rgba(255,255,255,0.05)';
+      if (isLit) cell.style.boxShadow = '0 0 6px rgba(255,255,255,0.8)';
       grid.appendChild(cell);
-      cells.push({ cell, isLit });
+      cells.push({ cell, isLit, col: c });
     }
   }
+
+  const bgCells  = cells.filter(c => !c.isLit);
+  const litCells = cells.filter(c => c.isLit);
+  bgCells.forEach((c, i) => setTimeout(() => c.cell.classList.add('revealed'), i * 4));
+  const bgDelay = bgCells.length * 4;
+  litCells.sort((a, b) => a.col - b.col);
+  litCells.forEach((c, i) => setTimeout(() => c.cell.classList.add('revealed'), bgDelay + i * 18));
+}
 
   // Сначала фон, потом буквы — с нарастающей задержкой
   const bg = cells.filter(c => !c.isLit);
