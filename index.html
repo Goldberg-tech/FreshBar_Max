@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Fresh Bar Catch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple:      #7B2FBE;
+  --purple-deep: #5A1F94;
+  --purple-dark: #3A1260;
+  --purple-light:#9B4FDE;
+  --purple-glow: rgba(123,47,190,0.4);
+  --pink:        #E8387A;
+  --pink-glow:   rgba(232,56,122,0.35);
+  --white:       #FFFFFF;
+  --off-white:   #F3EEFF;
+  --card:        rgba(255,255,255,0.10);
+  --card-border: rgba(255,255,255,0.15);
+  --text-dim:    rgba(255,255,255,0.60);
+  --text-muted:  rgba(255,255,255,0.30);
+  --green:       #3DDB61;
+  --green-glow:  rgba(61,219,97,0.35);
+  --red:         #FF4C4C;
+  --yellow:      #FFE033;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { overflow: hidden; height: 100%; }
+
+body {
+  background: var(--purple-dark);
+  color: var(--white);
+  font-family: 'Nunito', 'Helvetica Neue', sans-serif;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 0%, rgba(155,79,222,0.5) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 80%, rgba(90,31,148,0.6) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(58,18,96,0.4) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none; z-index: 0;
+}
+
+/* ============ SCREENS ============ */
+.screen {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s ease;
+  padding: env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 20px);
+  z-index: 1;
+}
+.screen.active { opacity: 1; pointer-events: auto; }
+.screen.scrollable {
+  overflow-y: auto; overflow-x: hidden; justify-content: flex-start;
+  -webkit-overflow-scrolling: touch; touch-action: pan-y;
+}
+
+/* backdrop-filter fallback для слабых устройств */
+@supports not (backdrop-filter: blur(1px)) {
+  .result-stats,
+  .result-rank,
+  .leader-row,
+  .btn-board { background: rgba(58,18,96,0.92); }
+}
+
+/* ============ MAIN SCREEN ============ */
+#mainScreen {
+  justify-content: flex-start;
+  padding-top: calc(env(safe-area-inset-top, 20px) + 40px);
+  gap: 0;
+}
+
+.brand-logo-img {
+  width: 140px; height: auto;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 4px 16px rgba(123,47,190,0.5));
+}
+.brand-logo-fallback {
+  display: none;
+  font-size: 28px; font-weight: 900; color: var(--white);
+  letter-spacing: -1px; margin-bottom: 6px;
+  text-shadow: 0 2px 16px rgba(123,47,190,0.5);
+}
+
+.brand-tagline {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 4px; text-transform: uppercase;
+  color: var(--text-dim); text-align: center; margin-bottom: 28px;
+}
+
+.main-hero {
+  width: 100%; max-width: 340px;
+  background: linear-gradient(135deg, var(--purple) 0%, var(--purple-deep) 60%, var(--purple-dark) 100%);
+  border-radius: 24px; padding: 24px 22px 22px;
+  margin-bottom: 20px; position: relative; overflow: hidden;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 12px 40px rgba(58,18,96,0.5);
+}
+.main-hero::before {
+  content: '🥤';
+  position: absolute; top: -8px; right: 16px;
+  font-size: 72px; opacity: 0.18;
+  transform: rotate(15deg);
+}
+.main-hero::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+}
+.main-hero-title {
+  font-size: 24px; font-weight: 900; color: var(--white);
+  line-height: 1.2; margin-bottom: 10px; position: relative; z-index: 1;
+}
+.main-hero-title em { font-style: normal; color: var(--yellow); }
+.main-hero-desc {
+  font-size: 13px; color: var(--text-dim); line-height: 1.55;
+  position: relative; z-index: 1;
+}
+
+.attempts-row {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  margin-bottom: 20px;
+}
+.attempt-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--purple-light);
+  box-shadow: 0 0 10px var(--purple-glow);
+  transition: all 0.3s;
+}
+.attempt-dot.empty { background: rgba(255,255,255,0.15); box-shadow: none; }
+.attempts-label { font-size: 13px; color: var(--text-dim); font-weight: 700; margin-left: 4px; }
+
+.btn-play {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; max-width: 340px; padding: 17px 32px;
+  background: linear-gradient(135deg, var(--purple-light) 0%, var(--purple) 100%);
+  color: var(--white); font-family: inherit; font-size: 17px; font-weight: 900;
+  border: none; border-radius: 16px; cursor: pointer; letter-spacing: 0.5px;
+  box-shadow: 0 6px 28px var(--purple-glow), inset 0 1px 0 rgba(255,255,255,0.2);
+  -webkit-tap-highlight-color: transparent; transition: transform 0.12s, box-shadow 0.12s;
+}
+.btn-play:active { transform: scale(0.96); box-shadow: 0 2px 12px var(--purple-glow); }
+
+.btn-board {
+  width: 100%; max-width: 340px; padding: 14px 32px;
+  background: var(--card); color: var(--white);
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  border: 1px solid var(--card-border); border-radius: 16px;
+  cursor: pointer; margin-top: 10px;
+  -webkit-tap-highlight-color: transparent; transition: background 0.2s;
+  backdrop-filter: blur(8px);
+}
+.btn-board:active { background: rgba(255,255,255,0.15); }
+
+/* ============ GAME SCREEN ============ */
+#gameScreen { padding: 0; background: var(--purple-dark); }
+
+.game-hud {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+  padding: calc(env(safe-area-inset-top, 20px) + 8px) 20px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(to bottom, rgba(58,18,96,0.98) 55%, transparent);
+}
+
+.hud-score-wrap { display: flex; flex-direction: column; }
+.hud-score-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--text-dim);
+}
+.hud-score {
+  font-size: 28px; font-weight: 900; color: var(--white);
+  line-height: 1; font-variant-numeric: tabular-nums;
+}
+
+.hud-timer-ring {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: conic-gradient(var(--purple-light) var(--pct, 100%), rgba(255,255,255,0.1) 0%);
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.hud-timer-ring::before {
+  content: ''; position: absolute; inset: 5px;
+  border-radius: 50%; background: var(--purple-dark);
+}
+.hud-timer-num {
+  font-size: 15px; font-weight: 900; position: relative; z-index: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-combo {
+  font-size: 12px; font-weight: 900; color: var(--green);
+  opacity: 0; transition: opacity 0.2s;
+  background: rgba(61,219,97,0.12); border: 1.5px solid var(--green);
+  border-radius: 20px; padding: 4px 12px; letter-spacing: 0.5px;
+}
+.hud-combo.visible { opacity: 1; }
+
+.game-canvas { position: absolute; inset: 0; overflow: hidden; }
+
+.game-object {
+  position: absolute; width: 60px; height: 60px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; will-change: transform;
+  transition: transform 0.08s;
+}
+.game-object:active { transform: scale(0.82) !important; }
+
+.game-object.good {
+  background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.25), rgba(155,79,222,0.3));
+  border: 2.5px solid rgba(255,255,255,0.5);
+  box-shadow: 0 4px 20px rgba(123,47,190,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.game-object.bonus {
+  background: radial-gradient(circle at 35% 35%, rgba(255,224,51,0.3), rgba(232,56,122,0.3));
+  border: 2.5px solid var(--yellow);
+  box-shadow: 0 4px 28px rgba(255,224,51,0.6);
+  animation: bonusPulse 1s ease infinite;
+}
+.game-object.bad {
+  background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
+  border: 2px solid rgba(255,255,255,0.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  filter: saturate(0.5);
+}
+
+@keyframes bonusPulse {
+  0%,100% { box-shadow: 0 4px 28px rgba(255,224,51,0.6); }
+  50%      { box-shadow: 0 4px 50px rgba(255,224,51,0.95), 0 0 70px rgba(232,56,122,0.4); }
+}
+@keyframes catchPop {
+  0%   { transform: scale(1); opacity: 1; }
+  40%  { transform: scale(1.55); opacity: 0.6; }
+  100% { transform: scale(0); opacity: 0; }
+}
+@keyframes missShake {
+  0%,100% { transform: translateX(0); opacity: 1; }
+  25%     { transform: translateX(-10px); }
+  50%     { transform: translateX(10px); }
+  75%     { transform: translateX(-5px); opacity: 0.4; }
+}
+.game-object.caught { animation: catchPop 0.3s ease forwards; }
+.game-object.missed { animation: missShake 0.35s ease forwards; }
+
+.score-popup {
+  position: absolute; font-size: 18px; font-weight: 900;
+  pointer-events: none; animation: scoreFloat 0.9s ease forwards; z-index: 20;
+}
+.score-popup.positive { color: var(--green); }
+.score-popup.negative { color: var(--red); }
+@keyframes scoreFloat {
+  0%   { opacity: 1; transform: translateY(0) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-70px) scale(0.7); }
+}
+
+@keyframes screenShake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-8px); }
+  40%     { transform: translateX(8px); }
+  60%     { transform: translateX(-5px); }
+  80%     { transform: translateX(5px); }
+}
+.shake { animation: screenShake 0.3s ease; }
+
+.countdown-overlay {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(42,14,80,0.88); backdrop-filter: blur(6px);
+  z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.countdown-overlay.active { opacity: 1; pointer-events: auto; }
+.countdown-num {
+  font-size: 110px; font-weight: 900; color: var(--white);
+  text-shadow: 0 0 60px var(--purple-glow), 0 0 120px var(--purple-glow);
+  animation: countPop 0.55s cubic-bezier(0.3,1.4,0.5,1);
+}
+@keyframes countPop {
+  0%   { transform: scale(0.3) rotate(-12deg); opacity: 0; }
+  65%  { transform: scale(1.12) rotate(3deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.booster-indicator {
+  position: absolute; top: calc(env(safe-area-inset-top, 20px) + 66px);
+  left: 50%; transform: translateX(-50%);
+  background: rgba(61,219,97,0.12); border: 1.5px solid var(--green);
+  border-radius: 20px; padding: 5px 16px;
+  font-size: 12px; font-weight: 700; color: var(--green);
+  z-index: 15; display: none; white-space: nowrap;
+}
+.booster-indicator.visible { display: flex; align-items: center; gap: 4px; }
+
+/* ============ RESULT SCREEN ============ */
+#resultScreen {
+  justify-content: flex-start; gap: 0;
+  padding-top: calc(env(safe-area-inset-top, 20px) + 28px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 40px);
+}
+
+.result-logo-wrap {
+  position: relative; width: 200px; height: 200px; margin-bottom: 20px;
+}
+.result-logo-grid {
+  width: 100%; height: 100%;
+  display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); gap: 2px;
+}
+.pixel-cell {
+  border-radius: 3px; opacity: 0; transform: scale(0);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.3,1.5,0.5,1);
+}
+.pixel-cell.revealed { opacity: 1; transform: scale(1); }
+
+.result-logo-svg {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.6s ease 0.3s;
+}
+.result-logo-svg.revealed { opacity: 1; }
+.result-logo-svg img {
+  width: 85%; height: auto;
+  filter: drop-shadow(0 4px 20px rgba(123,47,190,0.6)) brightness(0) invert(1);
+}
+
+.result-score-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--text-dim);
+  margin-bottom: 4px; text-align: center;
+}
+.result-score {
+  font-size: 56px; font-weight: 900; color: var(--white); line-height: 1;
+  margin-bottom: 4px; text-align: center;
+  text-shadow: 0 0 40px var(--purple-glow);
+}
+.result-best { font-size: 13px; color: var(--text-dim); margin-bottom: 18px; text-align: center; }
+
+.result-stats {
+  display: flex; width: 100%; max-width: 320px; margin-bottom: 14px;
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: 18px; overflow: hidden; backdrop-filter: blur(8px);
+}
+.result-stat { flex: 1; padding: 14px 8px; text-align: center; border-right: 1px solid var(--card-border); }
+.result-stat:last-child { border-right: none; }
+.result-stat-value { font-size: 22px; font-weight: 900; color: var(--white); }
+.result-stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; font-weight: 700; }
+
+.result-rank {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: 18px; padding: 14px 18px;
+  margin-bottom: 16px; width: 100%; max-width: 320px;
+  backdrop-filter: blur(8px);
+}
+.result-rank-pos { font-size: 24px; font-weight: 900; color: var(--purple-light); min-width: 44px; }
+.result-rank-text { font-size: 13px; color: var(--text-dim); line-height: 1.4; }
+
+.result-buttons { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 10px; }
+
+.btn-invite {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 16px 24px;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--purple) 100%);
+  color: var(--white); font-family: inherit; font-size: 15px; font-weight: 700;
+  border: none; border-radius: 16px; cursor: pointer;
+  box-shadow: 0 4px 20px var(--pink-glow);
+  -webkit-tap-highlight-color: transparent; transition: transform 0.12s;
+}
+.btn-invite:active { transform: scale(0.97); }
+
+.result-offer {
+  width: 100%; max-width: 320px;
+  background: linear-gradient(135deg, var(--purple) 0%, var(--purple-deep) 50%, var(--purple-dark) 100%);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 22px; padding: 22px 20px;
+  margin-top: 16px; text-align: center;
+  box-shadow: 0 8px 36px rgba(58,18,96,0.5);
+  position: relative; overflow: hidden;
+}
+.result-offer::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at top, rgba(155,79,222,0.3) 0%, transparent 70%);
+}
+.result-offer-logo {
+  width: 100px; height: auto; margin: 0 auto 12px;
+  display: block; position: relative;
+  filter: brightness(0) invert(1) drop-shadow(0 2px 8px rgba(255,255,255,0.3));
+}
+.result-offer-title {
+  font-size: 12px; font-weight: 700; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 2px;
+  margin-bottom: 6px; position: relative;
+}
+.result-offer-amount {
+  font-size: 44px; font-weight: 900; color: var(--yellow);
+  line-height: 1; margin: 4px 0; position: relative;
+  text-shadow: 0 2px 16px rgba(255,224,51,0.4);
+}
+.result-offer-desc {
+  font-size: 12px; color: var(--text-dim); line-height: 1.5; position: relative;
+}
+
+/* ============ LEADERBOARD ============ */
+#leaderScreen {
+  justify-content: flex-start; gap: 0;
+  padding-top: calc(env(safe-area-inset-top, 20px) + 56px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 24px);
+}
+
+.leader-header {
+  display: flex; align-items: center; width: 100%; max-width: 360px; margin-bottom: 20px;
+}
+.leader-back {
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  background: var(--card); border: 1px solid var(--card-border); border-radius: 12px;
+  color: var(--white); font-size: 18px; cursor: pointer; border: none;
+  font-family: inherit; -webkit-tap-highlight-color: transparent; backdrop-filter: blur(8px);
+}
+.leader-title {
+  flex: 1; text-align: center; font-size: 17px; font-weight: 900; margin-right: 40px;
+}
+
+.leader-podium { display: flex; align-items: flex-end; gap: 14px; margin-bottom: 22px; }
+.podium-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.podium-avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--card); border: 1.5px solid var(--card-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700;
+}
+.podium-item:nth-child(2) .podium-avatar {
+  width: 62px; height: 62px; font-size: 22px;
+  background: linear-gradient(135deg, var(--purple-light), var(--purple));
+  border: 2px solid rgba(255,255,255,0.3);
+  box-shadow: 0 6px 24px var(--purple-glow);
+}
+.podium-name { font-size: 12px; color: var(--text-dim); font-weight: 700; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.podium-score { font-size: 13px; font-weight: 900; }
+.podium-badge { font-size: 18px; }
+
+.leader-list {
+  width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 6px;
+  overflow-y: auto; max-height: 40vh; padding-bottom: 16px;
+}
+.leader-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: 14px; padding: 12px 14px;
+  backdrop-filter: blur(8px);
+}
+.leader-row.me {
+  border-color: var(--purple-light);
+  background: rgba(155,79,222,0.15);
+  box-shadow: 0 2px 16px rgba(123,47,190,0.2);
+}
+.leader-pos { font-size: 13px; font-weight: 700; color: var(--text-dim); min-width: 22px; }
+.leader-row.me .leader-pos { color: var(--purple-light); }
+.leader-avatar-sm {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--card); border: 1px solid var(--card-border);
+  display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+}
+.leader-name { flex: 1; font-size: 14px; font-weight: 700; }
+.leader-score-sm { font-size: 13px; font-weight: 700; color: var(--text-dim); }
+.fb-badge {
+  font-size: 9px;
+  background: linear-gradient(135deg, var(--purple-light), var(--purple));
+  color: var(--white); padding: 2px 7px; border-radius: 6px; font-weight: 700;
+  letter-spacing: 0.5px; margin-left: 6px;
+}
+
+.leader-footer { margin-top: 16px; width: 100%; max-width: 360px; }
+</style>
+</head>
+<body>
+
+<!-- ===== MAIN SCREEN ===== -->
+<div class="screen active" id="mainScreen">
+  <img class="brand-logo-img" id="mainLogo"
+    src="https://static.tildacdn.com/tild6139-3936-4231-a162-356231663365/Logo_FB.svg"
+    alt="Fresh Bar"
+    onerror="this.style.display='none';document.getElementById('mainLogoFallback').style.display='block'">
+  <div class="brand-logo-fallback" id="mainLogoFallback">FRESH BAR</div>
+  <div class="brand-tagline">Зафрешь момент</div>
+
+  <div class="main-hero">
+    <div class="main-hero-title">Лови <em>вкусы</em>,<br>зови друзей!</div>
+    <div class="main-hero-desc">Тапай по напиткам Fresh Bar, избегай обманок, набирай очки. Пригласи друга&nbsp;— бустер и&nbsp;скидка для вас обоих.</div>
+  </div>
+
+  <div class="attempts-row">
+    <span id="attemptDots"></span>
+    <span class="attempts-label" id="attemptsLabel">3 попытки</span>
+  </div>
+
+  <button class="btn-play" id="btnPlay">⚡ ЗАФРЕШЬ!</button>
+  <button class="btn-board" id="btnLeaderFromMain">🏆 Рейтинг</button>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div class="screen" id="gameScreen">
+  <div class="game-hud">
+    <div class="hud-score-wrap">
+      <div class="hud-score-label">Счёт</div>
+      <div class="hud-score" id="hudScore">0</div>
+    </div>
+    <div class="hud-combo" id="hudCombo">x3 COMBO!</div>
+    <div class="hud-timer-ring" id="timerRing" style="--pct:100%">
+      <div class="hud-timer-num" id="hudTimer">30</div>
+    </div>
+  </div>
+  <div class="booster-indicator" id="boosterInd">⚡ x2 FRESH!</div>
+  <div class="game-canvas" id="gameCanvas"></div>
+  <div class="countdown-overlay" id="countdown">
+    <div class="countdown-num" id="countdownNum">3</div>
+  </div>
+</div>
+
+<!-- ===== RESULT SCREEN ===== -->
+<div class="screen scrollable" id="resultScreen">
+  <div class="result-logo-wrap">
+    <div class="result-logo-grid" id="logoGrid"></div>
+    <div class="result-logo-svg" id="logoSvgReveal">
+      <img src="https://static.tildacdn.com/tild6139-3936-4231-a162-356231663365/Logo_FB.svg" alt="Fresh Bar">
+    </div>
+  </div>
+  <div class="result-score-label">Твой счёт</div>
+  <div class="result-score" id="finalScore">0</div>
+  <div class="result-best">Рекорд: <span id="bestScore">0</span></div>
+  <div class="result-stats">
+    <div class="result-stat"><div class="result-stat-value" id="statCaught">0</div><div class="result-stat-label">Поймано</div></div>
+    <div class="result-stat"><div class="result-stat-value" id="statCombo">0</div><div class="result-stat-label">Макс комбо</div></div>
+    <div class="result-stat"><div class="result-stat-value" id="statMissed">0</div><div class="result-stat-label">Промахов</div></div>
+  </div>
+  <div class="result-rank">
+    <div class="result-rank-pos" id="rankPos">#4</div>
+    <div class="result-rank-text">Место в рейтинге.<br>Зови друга — поднимись выше! 🚀</div>
+  </div>
+  <div class="result-buttons">
+    <button class="btn-invite" id="btnInvite">🍹 Позвать друга (+1 попытка)</button>
+    <button class="btn-play" id="btnPlayAgain">Играть снова</button>
+    <button class="btn-board" id="btnLeaderFromResult">🏆 Рейтинг</button>
+  </div>
+  <div class="result-offer">
+    <img class="result-offer-logo"
+      src="https://static.tildacdn.com/tild6139-3936-4231-a162-356231663365/Logo_FB.svg"
+      alt="Fresh Bar"
+      onerror="this.style.display='none'">
+    <div class="result-offer-title">Приведи друга</div>
+    <div class="result-offer-amount">−20%</div>
+    <div class="result-offer-desc">Скидка для вас обоих на следующую покупку Fresh Bar</div>
+  </div>
+</div>
+
+<!-- ===== LEADERBOARD ===== -->
+<div class="screen scrollable" id="leaderScreen">
+  <div class="leader-header">
+    <button class="leader-back" id="btnBackFromLeader">←</button>
+    <div class="leader-title">Рейтинг 🏆</div>
+  </div>
+  <div class="leader-podium" id="podium"></div>
+  <div class="leader-list" id="leaderList"></div>
+  <div class="leader-footer">
+    <button class="btn-invite" id="btnInviteFromLeader">🍹 Позвать друга (+1 попытка)</button>
+  </div>
+</div>
+
+<script>
+// ====== BRIDGE INIT ======
+// Поддержка Telegram WebApp и Max Mini App
+let _userId = null, _userName = 'Игрок';
+(function () {
+  const tg = window.Telegram?.WebApp;
+  const mb = window.MaxBridge;
+  const bridge = tg || mb;
+
+  if (bridge) {
+    try { bridge.ready?.(); } catch (e) {}
+    try { bridge.expand?.(); } catch (e) {}
+    try { if (typeof bridge.requestFullscreen === 'function') bridge.requestFullscreen(); } catch (e) {}
+    try { if (typeof bridge.disableVerticalSwipes === 'function') bridge.disableVerticalSwipes(); } catch (e) {}
+
+    const u = (tg?.initDataUnsafe?.user) || (mb?.initDataUnsafe?.user);
+    if (u) {
+      _userId = String(u.id || '');
+      _userName = u.first_name || u.name || u.username || 'Игрок';
+    }
+  }
+
+  // Анонимный ID если нет bridge
+  if (!_userId) {
+    let a = localStorage.getItem('fb_anon');
+    if (!a) { a = 'a' + Math.random().toString(36).slice(2); localStorage.setItem('fb_anon', a); }
+    _userId = a;
+  }
+})();
+
+// ====== STATE ======
+let score = 0, timeLeft = 30, combo = 0, maxCombo = 0, caught = 0, missed = 0;
+let attempts = 3, bestScore = parseInt(localStorage.getItem('fb_best') || '0');
+let hasBooster = false, gameRunning = false, gameTimer = null, spawnTimer = null, objectId = 0;
+let previousScreen = 'mainScreen', currentScreen = 'mainScreen';
+
+const leaderboard = [
+  { name: 'Алиса',   score: 1440, fb: true  },
+  { name: 'Максим',  score: 1120, fb: true  },
+  { name: 'Дарья',   score: 930,  fb: false },
+  { name: _userName, score: bestScore, fb: true, me: true },
+  { name: 'Артём',   score: 720,  fb: true  },
+  { name: 'Катя',    score: 640,  fb: false },
+  { name: 'Дмитрий', score: 580,  fb: true  },
+  { name: 'Настя',   score: 510,  fb: false },
+  { name: 'Иван',    score: 440,  fb: true  },
+  { name: 'Олег',    score: 370,  fb: false },
+];
+
+const LOGO_PATTERN = [
+  [1,0,1,0,1,1,1,0,1,1],
+  [1,0,1,0,1,0,0,0,1,0],
+  [1,1,1,0,1,1,0,0,1,1],
+  [1,0,1,0,1,0,0,0,1,0],
+  [1,0,1,0,1,1,1,0,1,1],
+  [0,0,0,0,0,0,0,0,0,0],
+  [0,1,0,0,1,0,1,0,0,1],
+  [0,1,0,0,1,0,1,0,0,1],
+  [0,1,0,0,1,1,1,0,0,1],
+  [2,1,2,0,1,0,1,0,2,1],
+];
+const PIXEL_COLS = ['#9B4FDE','#7B2FBE','#5A1F94','#B06EF5','#C890FF'];
+
+// ====== NAV ======
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  previousScreen = currentScreen;
+  currentScreen = id;
+}
+
+// ====== ATTEMPTS UI ======
+function updateAttemptDots() {
+  const wrap = document.getElementById('attemptDots');
+  wrap.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const d = document.createElement('span');
+    d.className = 'attempt-dot' + (i >= attempts ? ' empty' : '');
+    d.style.marginRight = '5px';
+    wrap.appendChild(d);
+  }
+  const n = Math.max(0, attempts);
+  document.getElementById('attemptsLabel').textContent =
+    `${n} попытк${n === 1 ? 'а' : n < 5 ? 'и' : ''}`;
+}
+updateAttemptDots();
+
+// ====== GAME OBJECTS ======
+const GOOD  = ['🍓','🍊','🍋','🍇','🍉','🍑','🥝','🫐','🍒','🍍'];
+const BONUS = ['🥤'];
+const BAD   = ['💧','🧊','🥛'];
+
+function spawnObject() {
+  if (!gameRunning) return;
+  const canvas = document.getElementById('gameCanvas');
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  const rand = Math.random();
+  let type, emoji, cls;
+
+  if (rand < 0.14) {
+    type = 'bad'; emoji = BAD[Math.floor(Math.random() * BAD.length)]; cls = 'bad';
+  } else if (rand < 0.21) {
+    type = 'bonus'; emoji = BONUS[0]; cls = 'bonus';
+  } else {
+    type = 'good'; emoji = GOOD[Math.floor(Math.random() * GOOD.length)]; cls = 'good';
+  }
+
+  const obj = document.createElement('div');
+  obj.className = `game-object ${cls}`;
+  obj.textContent = emoji;
+  obj.dataset.type = type;
+  obj.dataset.id = ++objectId;
+
+  const x = 24 + Math.random() * (w - 84);
+  const y = 90 + Math.random() * (h - 170);
+  obj.style.cssText = `left:${x}px;top:${y}px;transform:scale(0)`;
+  canvas.appendChild(obj);
+  requestAnimationFrame(() => { obj.style.transform = 'scale(1)'; });
+
+  obj.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    handleTap(obj, type, x, y);
+  }, { passive: false });
+
+  const lt = 1900 - (timeLeft < 15 ? 600 : 0);
+  setTimeout(() => {
+    if (obj.parentNode && !obj.dataset.tapped) {
+      obj.style.opacity = '0';
+      obj.style.transform = 'scale(0.4)';
+      setTimeout(() => obj.remove(), 200);
+      if (type !== 'bad') { missed++; combo = 0; updateHUD(); }
+    }
+  }, lt);
+}
+
+function handleTap(obj, type, x, y) {
+  if (obj.dataset.tapped) return;
+  obj.dataset.tapped = '1';
+
+  if (type === 'good') {
+    combo++; if (combo > maxCombo) maxCombo = combo;
+    const m = hasBooster ? 2 : 1;
+    const cb = combo >= 5 ? 3 : combo >= 3 ? 2 : 1;
+    const pts = 10 * cb * m;
+    score += pts; caught++;
+    obj.classList.add('caught');
+    showPop(x, y, `+${pts}`, 'positive');
+  } else if (type === 'bonus') {
+    combo++; if (combo > maxCombo) maxCombo = combo;
+    const pts = 60 * (hasBooster ? 2 : 1);
+    score += pts; caught++;
+    obj.classList.add('caught');
+    showPop(x, y, `+${pts}`, 'positive');
+  } else {
+    combo = 0;
+    score = Math.max(0, score - 25);
+    obj.classList.add('missed');
+    showPop(x, y, '-25', 'negative');
+    document.getElementById('gameCanvas').classList.add('shake');
+    setTimeout(() => document.getElementById('gameCanvas').classList.remove('shake'), 300);
+  }
+  updateHUD();
+  setTimeout(() => obj.remove(), 350);
+}
+
+function showPop(x, y, text, cls) {
+  const p = document.createElement('div');
+  p.className = `score-popup ${cls}`;
+  p.textContent = text;
+  p.style.cssText = `left:${x}px;top:${y - 14}px`;
+  document.getElementById('gameCanvas').appendChild(p);
+  setTimeout(() => p.remove(), 900);
+}
+
+function updateHUD() {
+  document.getElementById('hudScore').textContent = score;
+  const ce = document.getElementById('hudCombo');
+  if (combo >= 3) { ce.textContent = `x${combo} COMBO!`; ce.classList.add('visible'); }
+  else ce.classList.remove('visible');
+}
+
+// ====== GAME FLOW ======
+function startCountdown() {
+  // FIX: сбрасываем таймеры если игра была прервана
+  clearTimeout(spawnTimer);
+  clearInterval(gameTimer);
+  gameRunning = false;
+
+  showScreen('gameScreen');
+  const overlay = document.getElementById('countdown');
+  const numEl   = document.getElementById('countdownNum');
+  overlay.classList.add('active');
+  let count = 3;
+  numEl.textContent = count;
+
+  const iv = setInterval(() => {
+    count--;
+    if (count > 0) {
+      numEl.textContent = count;
+      numEl.style.animation = 'none';
+      void numEl.offsetWidth;
+      numEl.style.animation = 'countPop 0.55s cubic-bezier(0.3,1.4,0.5,1)';
+    } else {
+      clearInterval(iv);
+      overlay.classList.remove('active');
+      startGame();
+    }
+  }, 700);
+}
+
+function startGame() {
+  score = 0; timeLeft = 30; combo = 0; maxCombo = 0; caught = 0; missed = 0;
+  gameRunning = true; objectId = 0;
+  document.getElementById('gameCanvas').innerHTML = '';
+  updateHUD();
+  document.getElementById('hudTimer').textContent = timeLeft;
+  document.getElementById('timerRing').style.setProperty('--pct', '100%');
+
+  const bi = document.getElementById('boosterInd');
+  hasBooster ? bi.classList.add('visible') : bi.classList.remove('visible');
+
+  let sr = 700;
+  function sched() {
+    if (!gameRunning) return;
+    spawnObject();
+    sr = Math.max(340, 700 - (30 - timeLeft) * 16);
+    spawnTimer = setTimeout(sched, sr);
+  }
+  sched();
+
+  gameTimer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('hudTimer').textContent = timeLeft;
+    document.getElementById('timerRing').style.setProperty('--pct', (timeLeft / 30) * 100 + '%');
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function endGame() {
+  gameRunning = false;
+  clearInterval(gameTimer);
+  clearTimeout(spawnTimer);
+  hasBooster = false;
+
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem('fb_best', bestScore);
+  }
+
+  const me = leaderboard.find(l => l.me);
+  if (me) { me.score = Math.max(me.score, score); me.name = _userName; }
+  leaderboard.sort((a, b) => b.score - a.score);
+  const myRank = leaderboard.findIndex(l => l.me) + 1;
+
+  setTimeout(() => {
+    showScreen('resultScreen');
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('bestScore').textContent = bestScore;
+    document.getElementById('statCaught').textContent = caught;
+    document.getElementById('statCombo').textContent = maxCombo;
+    document.getElementById('statMissed').textContent = missed;
+    document.getElementById('rankPos').textContent = `#${myRank}`;
+    revealLogo();
+  }, 400);
+}
+
+// ====== LOGO REVEAL ======
+function revealLogo() {
+  const grid = document.getElementById('logoGrid');
+  grid.innerHTML = '';
+  document.getElementById('logoSvgReveal').classList.remove('revealed');
+
+  const cells = [];
+  for (let r = 0; r < 10; r++) {
+    for (let c = 0; c < 10; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'pixel-cell';
+      const val = LOGO_PATTERN[r][c];
+      if (val === 1) {
+        const col = PIXEL_COLS[Math.floor(Math.random() * PIXEL_COLS.length)];
+        cell.style.background = col;
+        cell.style.boxShadow = `0 0 6px ${col}`;
+      } else if (val === 2) {
+        cell.style.background = '#FFE033';
+        cell.style.boxShadow = '0 0 8px rgba(255,224,51,0.6)';
+      } else {
+        cell.style.background = 'rgba(255,255,255,0.04)';
+      }
+      grid.appendChild(cell);
+      cells.push({ cell, val });
+    }
+  }
+
+  const active = cells.filter(c => c.val > 0);
+  const empty  = cells.filter(c => c.val === 0);
+  const ratio  = Math.min(1, score / 400);
+  const toReveal = Math.max(4, Math.floor(active.length * ratio));
+
+  empty.forEach((c, i) => setTimeout(() => c.cell.classList.add('revealed'), i * 12));
+  const totalDelay = empty.length * 12;
+  active.sort(() => Math.random() - 0.5)
+    .slice(0, toReveal)
+    .forEach((c, i) => setTimeout(() => c.cell.classList.add('revealed'), totalDelay + i * 70));
+
+  const svgDelay = totalDelay + toReveal * 70 + 200;
+  setTimeout(() => document.getElementById('logoSvgReveal').classList.add('revealed'), svgDelay);
+}
+
+// ====== LEADERBOARD ======
+function renderLeaderboard() {
+  leaderboard.sort((a, b) => b.score - a.score);
+  const podium = document.getElementById('podium');
+  podium.innerHTML = '';
+
+  const top3   = leaderboard.slice(0, 3);
+  const order  = [1, 0, 2]; // серебро, золото, бронза — визуальный порядок пьедестала
+  const badges = ['🥇','🥈','🥉'];
+  const ini    = n => n.charAt(0).toUpperCase();
+
+  order.forEach(idx => {
+    if (!top3[idx]) return;
+    const p = top3[idx];
+    const div = document.createElement('div');
+    div.className = 'podium-item';
+    div.innerHTML = `
+      <div class="podium-badge">${badges[idx]}</div>
+      <div class="podium-avatar">${ini(p.name)}</div>
+      <div class="podium-name">${p.name}</div>
+      <div class="podium-score">${p.score}</div>`;
+    podium.appendChild(div);
+  });
+
+  const list = document.getElementById('leaderList');
+  list.innerHTML = '';
+  leaderboard.slice(3).forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = `leader-row${p.me ? ' me' : ''}`;
+    row.innerHTML = `
+      <div class="leader-pos">${i + 4}</div>
+      <div class="leader-avatar-sm">${ini(p.name)}</div>
+      <div class="leader-name">${p.name}${p.fb ? '<span class="fb-badge">FB</span>' : ''}</div>
+      <div class="leader-score-sm">${p.score}</div>`;
+    list.appendChild(row);
+  });
+}
+
+// ====== INVITE ======
+function doInvite() {
+  // TODO: заменить на реальный реферальный URL из панели Fresh Bar
+  const url  = 'https://freshbar.ru';
+  const text = encodeURIComponent(`Играй со мной в Fresh Bar Catch! 🥤 ${url}`);
+
+  // Для Telegram
+  try { window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${text}`, '_blank'); } catch (e) {}
+  try { window.Telegram?.WebApp?.switchInlineQuery?.('Зафрешь с другом!', ['users']); } catch (e) {}
+
+  // Для Max — TODO: уточнить актуальный метод в документации Max Mini Apps
+  // try { window.MaxBridge?.shareUrl?.(url, text); } catch (e) {}
+
+  hasBooster = true;
+  attempts = Math.min(attempts + 1, 5);
+  updateAttemptDots();
+}
+
+// ====== HELPER: запуск игры с проверкой попыток ======
+function tryStartGame() {
+  if (attempts <= 0) {
+    alert('Попытки закончились! Позови друга 🍹');
+    return;
+  }
+  attempts--;
+  updateAttemptDots();
+  startCountdown();
+}
+
+// ====== EVENTS ======
+document.getElementById('btnPlay').addEventListener('click', tryStartGame);
+document.getElementById('btnPlayAgain').addEventListener('click', tryStartGame);
+document.getElementById('btnInvite').addEventListener('click', doInvite);
+document.getElementById('btnInviteFromLeader').addEventListener('click', doInvite);
+document.getElementById('btnLeaderFromMain').addEventListener('click', () => { renderLeaderboard(); showScreen('leaderScreen'); });
+document.getElementById('btnLeaderFromResult').addEventListener('click', () => { renderLeaderboard(); showScreen('leaderScreen'); });
+document.getElementById('btnBackFromLeader').addEventListener('click', () => {
+  showScreen(previousScreen === 'leaderScreen' ? 'mainScreen' : previousScreen);
+});
+
+document.addEventListener('touchmove', e => {
+  if (!e.target.closest('.screen.scrollable')) e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('contextmenu', e => e.preventDefault());
+</script>
+</body>
+</html>
