@@ -902,20 +902,6 @@ function revealLogo() {
   litCells.forEach((c, i) => setTimeout(() => c.cell.classList.add('revealed'), bgDelay + i * 18));
 }
 
-  // Сначала фон, потом буквы — с нарастающей задержкой
-  const bg = cells.filter(c => !c.isLit);
-  const lit = cells.filter(c => c.isLit);
-
-  bg.forEach((c, i) => setTimeout(() => c.cell.classList.add('revealed'), i * 8));
-  const bgDelay = bg.length * 8;
-  // Буквы появляются колонка за колонкой слева направо
-  lit.sort((a, b) => {
-    const ai = cells.indexOf(a), bi = cells.indexOf(b);
-    return (ai % 18) - (bi % 18);
-  });
-  lit.forEach((c, i) => setTimeout(() => c.cell.classList.add('revealed'), bgDelay + i * 35));
-}
-
 // ====== LEADERBOARD ======
 function renderLeaderboard() {
   leaderboard.sort((a, b) => b.score - a.score);
