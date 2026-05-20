@@ -118,9 +118,11 @@ body::after {
 }
 .main-hero::before {
   content: '🥤';
-  position: absolute; top: -8px; right: 16px;
-  font-size: 72px; opacity: 0.18;
-  transform: rotate(15deg);
+  position: absolute; top: 8px; right: 18px;
+  font-size: 64px; opacity: 0.55;
+  transform: rotate(12deg);
+  filter: none;
+  -webkit-filter: none;
 }
 .main-hero::after {
   content: '';
@@ -237,10 +239,9 @@ body::after {
   animation: bonusPulse 1s ease infinite;
 }
 .game-object.bad {
-  background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
-  border: 2px solid rgba(255,255,255,0.2);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  filter: saturate(0.5);
+  background: radial-gradient(circle at 35% 35%, rgba(255,100,100,0.35), rgba(200,0,0,0.25));
+  border: 2.5px solid #FF4C4C;
+  box-shadow: 0 4px 18px rgba(255,76,76,0.55), inset 0 1px 0 rgba(255,150,150,0.2);
 }
 
 @keyframes bonusPulse {
