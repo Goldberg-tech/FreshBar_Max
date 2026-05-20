@@ -313,7 +313,7 @@ body::after {
 #resultScreen {
   justify-content: flex-start; gap: 0;
   padding-top: calc(env(safe-area-inset-top, 20px) + 28px);
-  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 40px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 60px);
 }
 
 .result-logo-wrap {
@@ -324,20 +324,12 @@ body::after {
   display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); gap: 2px;
 }
 .pixel-cell {
-  border-radius: 3px; opacity: 0; transform: scale(0);
-  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.3,1.5,0.5,1);
+  border-radius: 4px; opacity: 0; transform: scale(0);
+  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.3,1.5,0.5,1);
 }
 .pixel-cell.revealed { opacity: 1; transform: scale(1); }
-
-.result-logo-svg {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity 0.6s ease 0.3s;
-}
-.result-logo-svg.revealed { opacity: 1; }
-.result-logo-svg img {
-  width: 85%; height: auto;
-  filter: drop-shadow(0 4px 20px rgba(123,47,190,0.6)) brightness(0) invert(1);
+.pixel-cell.lit {
+  box-shadow: 0 0 8px rgba(255,255,255,0.9);
 }
 
 .result-score-label {
@@ -390,7 +382,9 @@ body::after {
   background: linear-gradient(135deg, var(--purple) 0%, var(--purple-deep) 50%, var(--purple-dark) 100%);
   border: 1px solid rgba(255,255,255,0.2);
   border-radius: 22px; padding: 22px 20px;
-  margin-top: 16px; text-align: center;
+  margin-top: 16px;
+  margin-bottom: 32px; /* ← добавить */
+  text-align: center;
   box-shadow: 0 8px 36px rgba(58,18,96,0.5);
   position: relative; overflow: hidden;
 }
@@ -631,17 +625,19 @@ const leaderboard = [
   { name: 'Олег',    score: 370,  fb: false },
 ];
 
+// Точный пиксельный паттерн логотипа FRESH BAR (10x18)
 const LOGO_PATTERN = [
-  [1,0,1,0,1,1,1,0,1,1],
-  [1,0,1,0,1,0,0,0,1,0],
-  [1,1,1,0,1,1,0,0,1,1],
-  [1,0,1,0,1,0,0,0,1,0],
-  [1,0,1,0,1,1,1,0,1,1],
-  [0,0,0,0,0,0,0,0,0,0],
-  [0,1,0,0,1,0,1,0,0,1],
-  [0,1,0,0,1,0,1,0,0,1],
-  [0,1,0,0,1,1,1,0,0,1],
-  [2,1,2,0,1,0,1,0,2,1],
+  [0,1,1,1,0,1,0,0,1,0,1,1,1,0,1,1,0,0],
+  [0,1,0,0,0,1,0,0,1,0,1,0,0,0,1,0,1,0],
+  [0,1,1,0,0,1,1,1,1,0,1,1,0,0,1,0,1,0],
+  [0,1,0,0,0,1,0,0,1,0,1,0,0,0,1,0,1,0],
+  [0,1,0,0,0,1,0,0,1,0,1,1,1,0,1,1,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,1,1,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0],
+  [0,1,0,1,0,1,0,1,0,1,0,0,0,1,0,0,1,0],
+  [0,1,1,0,0,1,1,1,0,1,1,0,0,1,0,0,1,0],
+  [0,1,0,1,0,1,0,1,0,1,0,0,0,1,0,0,1,0],
+  [0,1,0,1,0,1,0,1,0,1,1,1,0,1,1,1,1,0],
 ];
 const PIXEL_COLS = ['#9B4FDE','#7B2FBE','#5A1F94','#B06EF5','#C890FF'];
 
@@ -852,42 +848,41 @@ function endGame() {
 function revealLogo() {
   const grid = document.getElementById('logoGrid');
   grid.innerHTML = '';
-  document.getElementById('logoSvgReveal').classList.remove('revealed');
+  document.getElementById('logoSvgReveal').style.display = 'none';
+
+  // Сетка под паттерн: 18 колонок, 11 строк
+  grid.style.gridTemplateColumns = 'repeat(18, 1fr)';
+  grid.style.gridTemplateRows = 'repeat(11, 1fr)';
 
   const cells = [];
-  for (let r = 0; r < 10; r++) {
-    for (let c = 0; c < 10; c++) {
+  for (let r = 0; r < 11; r++) {
+    for (let c = 0; c < 18; c++) {
       const cell = document.createElement('div');
       cell.className = 'pixel-cell';
-      const val = LOGO_PATTERN[r][c];
-      if (val === 1) {
-        const col = PIXEL_COLS[Math.floor(Math.random() * PIXEL_COLS.length)];
-        cell.style.background = col;
-        cell.style.boxShadow = `0 0 6px ${col}`;
-      } else if (val === 2) {
-        cell.style.background = '#FFE033';
-        cell.style.boxShadow = '0 0 8px rgba(255,224,51,0.6)';
+      const isLit = LOGO_PATTERN[r][c] === 1;
+      if (isLit) {
+        cell.style.background = '#FFFFFF';
+        cell.classList.add('lit');
       } else {
         cell.style.background = 'rgba(255,255,255,0.04)';
       }
       grid.appendChild(cell);
-      cells.push({ cell, val });
+      cells.push({ cell, isLit });
     }
   }
 
-  const active = cells.filter(c => c.val > 0);
-  const empty  = cells.filter(c => c.val === 0);
-  const ratio  = Math.min(1, score / 400);
-  const toReveal = Math.max(4, Math.floor(active.length * ratio));
+  // Сначала фон, потом буквы — с нарастающей задержкой
+  const bg = cells.filter(c => !c.isLit);
+  const lit = cells.filter(c => c.isLit);
 
-  empty.forEach((c, i) => setTimeout(() => c.cell.classList.add('revealed'), i * 12));
-  const totalDelay = empty.length * 12;
-  active.sort(() => Math.random() - 0.5)
-    .slice(0, toReveal)
-    .forEach((c, i) => setTimeout(() => c.cell.classList.add('revealed'), totalDelay + i * 70));
-
-  const svgDelay = totalDelay + toReveal * 70 + 200;
-  setTimeout(() => document.getElementById('logoSvgReveal').classList.add('revealed'), svgDelay);
+  bg.forEach((c, i) => setTimeout(() => c.cell.classList.add('revealed'), i * 8));
+  const bgDelay = bg.length * 8;
+  // Буквы появляются колонка за колонкой слева направо
+  lit.sort((a, b) => {
+    const ai = cells.indexOf(a), bi = cells.indexOf(b);
+    return (ai % 18) - (bi % 18);
+  });
+  lit.forEach((c, i) => setTimeout(() => c.cell.classList.add('revealed'), bgDelay + i * 35));
 }
 
 // ====== LEADERBOARD ======
